@@ -16,9 +16,10 @@ import {
     Color4, SceneLoader, Skeleton,
 } from "babylonjs";
 
+import { Icon } from "./gui/icon";
 import { Overlay } from "./gui/overlay";
-import { ActivityIndicator } from "./gui/acitivity-indicator";
 import { Confirm } from "./gui/confirm";
+import { ActivityIndicator } from "./gui/acitivity-indicator";
 
 import { Tools } from "./tools/tools";
 import { IPCTools } from "./tools/ipc";
@@ -114,6 +115,7 @@ import { WebpackProgressExtension } from "./extensions/webpack-progress";
 
 // Json
 import layoutConfiguration from "./layout.json";
+import rootLayoutConfiguration from "./root-layout.json";
 
 export interface ILayoutTabNodeConfiguration {
     /**
@@ -145,9 +147,13 @@ export class Editor {
     public scene: Nullable<Scene> = null;
 
     /**
-     * Reference to the layout used to create the editor's sections.
+     * Defines the reference to the layout used to create the editor's sections.
      */
     public layout: Layout;
+    /**
+     * Defines the reference to the root layout used to draw layout and tabs on the overall editor's window.
+     */
+    public rootLayout: Layout;
 
     /**
      * Reference to the inspector tool used to edit objects in the scene.
@@ -305,8 +311,15 @@ export class Editor {
      * @hidden
      */
     public readonly _layoutTabNodesConfigurations: Record<string, ILayoutTabNodeConfiguration> = {};
+    /**
+     * Defines the dictionary of all configurations for all tab nodes in root layout. This configuration is updated
+     * each time a node event is triggered, like "resize".
+     * @hidden
+     */
+    public readonly _rootLayoutTabNodesConfigurations: Record<string, ILayoutTabNodeConfiguration> = {};
 
     private _components: IStringDictionary<React.ReactNode> = {};
+    private _rootComponents: IStringDictionary<React.ReactNode> = {};
 
     private _taskFeedbacks: IStringDictionary<{
         message: string;
@@ -353,24 +366,114 @@ export class Editor {
         // Register loaders
         SceneLoader.RegisterPlugin(new FBXLoader());
 
-        // Create toolbar
-        ReactDOM.render(<MainToolbar editor={this} />, document.getElementById("BABYLON-EDITOR-MAIN-TOOLBAR"));
-        ReactDOM.render(<ToolsToolbar editor={this} />, document.getElementById("BABYLON-EDITOR-TOOLS-TOOLBAR"));
-
-        // Toaster
-        ReactDOM.render(<Toaster canEscapeKeyClear={true} position={Position.BOTTOM_LEFT} ref={this._refHandlers.getToaster}></Toaster>, document.getElementById("BABYLON-EDITOR-TOASTS"));
-
-        // Activity Indicator
-        ReactDOM.render(
-            <ActivityIndicator size={25} ref={this._refHandlers.getActivityIndicator} onClick={() => this._revealAllTasks()}></ActivityIndicator>,
-            document.getElementById("BABYLON-EDITOR-ACTIVITY-INDICATOR"),
-        );
-
         // Empty touchbar
         TouchBarHelper.SetTouchBarElements([]);
 
         // Init!
-        this.init();
+        this.initRootLayout().then(() => {
+            // Create toolbar
+            ReactDOM.render(<MainToolbar editor={this} />, document.getElementById("BABYLON-EDITOR-MAIN-TOOLBAR"));
+            ReactDOM.render(<ToolsToolbar editor={this} />, document.getElementById("BABYLON-EDITOR-TOOLS-TOOLBAR"));
+
+            // Toaster
+            ReactDOM.render(<Toaster canEscapeKeyClear={true} position={Position.BOTTOM_LEFT} ref={this._refHandlers.getToaster}></Toaster>, document.getElementById("BABYLON-EDITOR-TOASTS"));
+
+            // Activity Indicator
+            ReactDOM.render(
+                <ActivityIndicator size={25} ref={this._refHandlers.getActivityIndicator} onClick={() => this._revealAllTasks()}></ActivityIndicator>,
+                document.getElementById("BABYLON-EDITOR-ACTIVITY-INDICATOR"),
+            );
+
+            this.init();
+        });
+    }
+
+    /**
+     * Initializes the root layout used to render layouts and tabs for the overall editor.
+     * This layout state will not be saved.
+     */
+    public async initRootLayout(): Promise<void> {
+        const tabs = rootLayoutConfiguration.layout.children[0].children as any;
+        tabs.push({
+            type: "tab",
+            enableClose: false,
+            component: "editor",
+            name: (
+                <div style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+                    <Icon src="logo-babylon.svg" style={{ height: "100%", width: "32px", filter: "none", float: "left" }} />
+                    <span style={{ float: "left", lineHeight: "32px", textAlign: "center" }}>Editor</span>
+                </div>
+            ),
+            enableRenderOnDemand: false,
+            className: "editorRootLayoutTabStrip",
+        });
+
+        const layoutModel = Model.fromJson(rootLayoutConfiguration);
+
+        return new Promise<void>((resolve) => {
+            ReactDOM.render((
+                <Layout ref={(r) => this.rootLayout = r!} model={layoutModel} factory={(n) => this._rootLayoutFactory(n)} />
+            ), document.getElementById("BABYLON-EDITOR-ROOT-LAYOUT"), () => {
+                setTimeout(() => resolve(), 0);
+            });
+        });
+    }
+
+    /**
+     * Called each time a FlexLayout.TabNode is mounted by React for the root layout.
+     */
+    private _rootLayoutFactory(node: TabNode): React.ReactNode {
+        const componentName = node.getComponent();
+        if (!componentName) {
+            this.console.logError("Can't mount layout node without component name.");
+            return <div>Error, see console...</div>;
+        }
+
+        const component = (componentName === "editor") ? (
+            <>
+                <div id="BABYLON-EDITOR-TOOLBAR" className="bp3-dark" style={{ width: "100%", height: "63px", backgroundColor: "#444444 !important" }}>
+                    <div id="BABYLON-EDITOR-MAIN-TOOLBAR" className="bp3-dark" style={{ width: "100%", height: "31px" }}></div>
+                    <div id="BABYLON-EDITOR-TOOLS-TOOLBAR" className="bp3-dark" style={{ width: "100%", height: "31px" }}></div>
+                </div>
+                <div id="BABYLON-EDITOR" className="bp3-dark" style={{ width: "100%", height: "calc(100% - 63px)", overflow: "hidden" }}></div>
+            </>
+        ) : this._rootComponents[componentName];
+
+        if (!component) {
+            this.console.logError(`No react component available for "${componentName}" in root layout.`);
+            return <div>Error, see console...</div>;
+        }
+
+        this._rootLayoutTabNodesConfigurations[componentName] ??= {
+            componentName,
+            id: node.getId(),
+            name: node.getName(),
+            rect: node.getRect(),
+        };
+
+        node.setEventListener("resize", (ev: { rect: Rect }) => {
+            const configuration = this._rootLayoutTabNodesConfigurations[componentName];
+            configuration.rect = ev.rect;
+
+            setTimeout(() => this.resize(), 0);
+        });
+
+        if (Editor.LoadedPlugins[componentName]) {
+            node.setEventListener("close", () => {
+                setTimeout(() => this.closePlugin(componentName, true), 0);
+            });
+
+            node.setEventListener("visibility", (p) => {
+                const plugin = this.plugins[node.getName()];
+                if (p.visible) {
+                    plugin?.onShow();
+                } else {
+                    plugin?.onHide();
+                }
+            });
+        }
+
+        return component;
     }
 
     /**
@@ -416,7 +519,13 @@ export class Editor {
         const layoutModel = Model.fromJson(layoutState);
 
         ReactDOM.render((
-            <Layout ref={(r) => this.layout = r!} model={layoutModel} factory={(n) => this._layoutFactory(n)} />
+            <Layout ref={(r) => this.layout = r!} classNameMapper={(c) => {
+                if (c === "flexlayout__layout") {
+                    return "editorFlexLayout";
+                }
+
+                return c;
+            }} model={layoutModel} factory={(n) => this._layoutFactory(n)} />
         ), document.getElementById("BABYLON-EDITOR"), () => {
             setTimeout(() => this._init(), 0);
         });
@@ -594,6 +703,17 @@ export class Editor {
     }
 
     /**
+     * Adds a new plugin to the root layout.
+     * @param name the name of the plugin to laod.
+     * @param icon defines the optional reference to the icon of the tab.
+     * @param openParameters defines the optional reference to the opening parameters.
+     */
+    public addRootBuiltInPlugin(name: string, icon: string = "logo-babylon.svg", openParameters: any = {}): void {
+        const plugin = require(`../tools/${name}`);
+        this._addRootPlugin(plugin, name, icon, false, openParameters);
+    }
+
+    /**
      * Adds the given plugin to the editor's layout.
      * @param path defines the path of the plugin.
      * @param openParameters defines the optional reference to the opening parameters.
@@ -607,23 +727,30 @@ export class Editor {
      * Closes the plugin identified by the given name.
      * @param pluginName the name of the plugin to close.
      */
-    public closePlugin(pluginName: string): void {
+    public closePlugin(pluginName: string, rootLayout: boolean = false): void {
         let effectiveKey = pluginName;
-        for (const key in this._layoutTabNodesConfigurations) {
-            if (this._layoutTabNodesConfigurations[key].name === pluginName) {
-                effectiveKey = this._layoutTabNodesConfigurations[key].componentName;
+
+        const layoutTabNodesConfigurations = rootLayout ? this._rootLayoutTabNodesConfigurations : this._layoutTabNodesConfigurations;
+        for (const key in layoutTabNodesConfigurations) {
+            if (layoutTabNodesConfigurations[key].name === pluginName) {
+                effectiveKey = layoutTabNodesConfigurations[key].componentName;
                 break;
             }
         }
 
         this.layout.props.model.doAction(Actions.deleteTab(effectiveKey));
 
-        const configuration = this._layoutTabNodesConfigurations[pluginName];
+        const configuration = layoutTabNodesConfigurations[pluginName];
         if (configuration && this.plugins[configuration.name]) {
             delete this.plugins[configuration.name];
         }
 
-        delete this._components[effectiveKey];
+        if (rootLayout) {
+            delete this._rootComponents[effectiveKey];
+        } else {
+            delete this._components[effectiveKey];
+        }
+
         delete Editor.LoadedPlugins[effectiveKey];
 
         this.resize();
@@ -793,6 +920,34 @@ export class Editor {
         // Add component
         this._components[name] = <plugin.default editor={this} id={plugin.title} openParameters={openParameters} />;
         this.layout.addTabToActiveTabSet({ type: "tab", name: plugin.title, component: name, id: name });
+    }
+
+    /**
+     * Adds the given plugin into the root layout.
+     */
+    private _addRootPlugin(plugin: any, name: string, icon: string, fullPath: boolean, openParameters: any = {}): void {
+        if (this._rootComponents[name]) {
+            this.rootLayout.props.model.doAction(Actions.selectTab(name));
+            return;
+        }
+
+        // Register plugin
+        Editor.LoadedPlugins[name] = { name, fullPath };
+
+        // Add component
+        this._rootComponents[name] = <plugin.default editor={this} id={plugin.title} openParameters={openParameters} />;
+        this.rootLayout.addTabToActiveTabSet({
+            id: name,
+            type: "tab",
+            component: name,
+            className: "editorRootLayoutTabStrip",
+            name: (
+                <div style={{ width: "268px", height: "100%", overflow: "hidden" }}>
+                    <Icon src={icon} style={{ height: "100%", width: "32px", filter: "none", float: "left" }} />
+                    <span style={{ float: "left", lineHeight: "32px", textAlign: "center" }}>{plugin.title}</span>
+                </div>
+            )
+        });
     }
 
     /**

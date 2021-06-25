@@ -1,3 +1,4 @@
+import { join } from "path";
 import { writeJSON } from "fs-extra";
 import { ipcRenderer } from "electron";
 
@@ -13,10 +14,11 @@ import { IPCTools } from "../../../../tools/ipc";
 import { SceneExporter } from "../../../../project/scene-exporter";
 
 import { AssetsBrowserItemHandler } from "../item-handler";
-import { join } from "path";
 
 export class GraphItemHandler extends AssetsBrowserItemHandler {
     private static _GraphEditors: { id: number; path: string }[] = [];
+
+    private _computeRootLayout: boolean = true;
 
     /**
      * Computes the image to render.
@@ -53,6 +55,12 @@ export class GraphItemHandler extends AssetsBrowserItemHandler {
      * @param ev defines the reference to the event object.
      */
     public async onDoubleClick(_: React.MouseEvent<HTMLDivElement, MouseEvent>): Promise<void> {
+        if (this._computeRootLayout) {
+            return this.props.editor.addRootBuiltInPlugin("graph-editor", "project-diagram.svg", {
+                graphPath: this.props.absolutePath,
+            });
+        }
+
         const index = GraphItemHandler._GraphEditors.findIndex((m) => m.path === this.props.absolutePath);
         const existingId = index !== -1 ? GraphItemHandler._GraphEditors[index].id : undefined;
 

@@ -1,0 +1,92 @@
+{
+    "global": {
+        "tabSetEnableMaximize": true,
+        "tabEnableRename": false,
+        "tabSetMinHeight": 50,
+        "tabSetMinWidth": 240,
+        "enableEdgeDock": false
+    },
+    "layout": {
+        "type": "row",
+        "width": "100%",
+        "height": "calc(100% - 63px)",
+        "children": [
+            {
+                "type": "row",
+                "weight": 75,
+                "children": [
+                    {
+                        "type": "row",
+                        "weight": 70,
+                        "children": [
+                            {
+                                "type": "tabset",
+                                "weight": 25,
+                                "children": [
+                                    {
+                                        "type": "tab",
+                                        "id": "inspector",
+                                        "name": "Inspector",
+                                        "component": "inspector",
+                                        "enableClose": false,
+                                        "enableRenderOnDemand": false
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "tabset",
+                                "weight": 75,
+                                "children": [
+                                    {
+                                        "type": "tab",
+                                        "id": "graph",
+                                        "name": "Graph",
+                                        "component": "graph",
+                                        "enableClose": false,
+                                        "enableRenderOnDemand": false
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "type": "row",
+                        "weight": 30,
+                        "children": [
+                            {
+                                "type": "tabset",
+                                "weight": 57,
+                                "active": true,
+                                "children": [
+                                    {
+                                        "type": "tab",
+                                        "id": "console",
+                                        "name": "Console",
+                                        "component": "console",
+                                        "enableClose": false,
+                                        "enableRenderOnDemand": false
+                                    }
+                                ]
+                            },
+                            {
+                                "type": "tabset",
+                                "weight": 57,
+                                "active": true,
+                                "children": [
+                                    {
+                                        "type": "tab",
+                                        "id": "stack-trace",
+                                        "name": "Stack Trace",
+                                        "component": "stack-trace",
+                                        "enableClose": false,
+                                        "enableRenderOnDemand": false
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            }
+        ]
+    }
+}

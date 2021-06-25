@@ -1,0 +1,22 @@
+{
+    "global": {
+        "tabSetMinWidth": 240,
+        "tabSetMinHeight": 100,
+        "enableEdgeDock": false,
+        "tabEnableRename": false,
+        "tabSetTabStripHeight": 50,
+        "tabSetEnableMaximize": true
+    },
+    "layout": {
+        "type": "row",
+        "weight": 100,
+        "children": [
+            {
+                "type": "tabset",
+                "weight": 100,
+                "selected": 0,
+                "children": []
+            }
+        ]
+    }
+}

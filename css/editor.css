@@ -57,8 +57,18 @@ html, body {
 }
 
 /* FLEX LAYOUT */
-.flexlayout__layout {
+
+.editorRootLayoutTabStrip {
+    min-width: 300px;
+}
+
+.editorFlexLayout {
+    left: 0;
     top: 63px;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+    overflow: hidden;
 }
 
 .flexlayout__tabset-selected {
