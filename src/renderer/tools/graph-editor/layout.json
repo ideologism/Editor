@@ -82,6 +82,21 @@
                                         "enableRenderOnDemand": false
                                     }
                                 ]
+                            },
+                            {
+                                "type": "tabset",
+                                "weight": 57,
+                                "active": true,
+                                "children": [
+                                    {
+                                        "type": "tab",
+                                        "id": "preview",
+                                        "name": "Preview",
+                                        "component": "preview",
+                                        "enableClose": false,
+                                        "enableRenderOnDemand": false
+                                    }
+                                ]
                             }
                         ]
                     }

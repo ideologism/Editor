@@ -71,6 +71,15 @@ html, body {
     overflow: hidden;
 }
 
+.graphEditorFlexLayout {
+    left: 0;
+    top: 80px;
+    right: 0;
+    bottom: 0;
+    position: absolute;
+    overflow: hidden;
+}
+
 .flexlayout__tabset-selected {
     background-image: unset;
     background-color: #111111;

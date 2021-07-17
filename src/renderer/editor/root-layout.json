@@ -4,7 +4,7 @@
         "tabSetMinHeight": 100,
         "enableEdgeDock": false,
         "tabEnableRename": false,
-        "tabSetTabStripHeight": 50,
+        "tabSetTabStripHeight": 40,
         "tabSetEnableMaximize": true
     },
     "layout": {
