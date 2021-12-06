@@ -9,11 +9,14 @@ import {
 
 import { Icon } from "../../editor/gui/icon";
 
+import { Tools } from "../../editor/tools/tools";
 import { undoRedo } from "../../editor/tools/undo-redo";
 
 import { AbstractEditorPlugin, IEditorPluginProps } from "../../editor/tools/plugin";
 
 import { GraphComponent } from "./graph";
+import { GraphInspector } from "./inspector";
+
 import layoutConfiguration from "./layout.json";
 
 export const title = "Graph Editor";
@@ -49,13 +52,9 @@ export default class GraphEditorPlugin extends AbstractEditorPlugin<IGraphEditor
             standalone: false,
         };
 
-        this._components["graph"] = (
-            <GraphComponent
-                editor={this.editor}
-                ref={(r) => this.graphComponent = r!}
-                graphPath={props.openParameters.graphPath}
-            />
-        );
+        // Register components
+        this._components["graph"] = (<GraphComponent editor={this.editor} ref={(r) => this.graphComponent = r!} graphPath={props.openParameters.graphPath} />);
+        this._components["inspector"] = (<GraphInspector editor={this.editor} toolId={Tools.RandomId()} _objectRef={null} />);
     }
 
     /**
@@ -104,13 +103,7 @@ export default class GraphEditorPlugin extends AbstractEditorPlugin<IGraphEditor
                     </ButtonGroup>
                     <Divider />
                 </div>
-                <Layout model={layoutModel} factory={(n) => this._rootLayoutFactory(n)} classNameMapper={(c) => {
-                    if (c === "flexlayout__layout") {
-                        return "graphEditorFlexLayout";
-                    }
-
-                    return c;
-                }} />
+                <Layout model={layoutModel} factory={(n) => this._rootLayoutFactory(n)}} />
             </div>
         );
     }

@@ -28,7 +28,11 @@ export abstract class AbstractInspector<T, S> extends React.Component<IObjectIns
      */
     protected selectedObject: T;
 
-    private _inspectorDiv: Nullable<HTMLDivElement> = null;
+    /**
+     * @hidden
+     */
+    protected _inspectorDiv: Nullable<HTMLDivElement> = null;
+    
     private _isMounted: boolean = false;
 
     private readonly _inspectorName: string;

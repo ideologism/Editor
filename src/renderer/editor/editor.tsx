@@ -455,6 +455,8 @@ export class Editor {
             const configuration = this._rootLayoutTabNodesConfigurations[componentName];
             configuration.rect = ev.rect;
 
+            this.layout.forceUpdate();
+
             setTimeout(() => this.resize(), 0);
         });
 
@@ -614,13 +616,32 @@ export class Editor {
 
     /**
      * Returns the current size of the panel identified by the given id.
-     * @param panelId the id of the panel to retrieve its size.
+     * @param panelId defines the id of the panel to retrieve its size.
      */
     public getPanelSize(panelId: string): ISize {
         let configuration: Nullable<ILayoutTabNodeConfiguration> = null; // = this._layoutTabNodesConfigurations[panelId];
         for (const key in this._layoutTabNodesConfigurations) {
             if (key === panelId || this._layoutTabNodesConfigurations[key].name === panelId) {
                 configuration = this._layoutTabNodesConfigurations[key];
+            }
+        }
+
+        if (!configuration) {
+            return { width: 0, height: 0 };
+        }
+
+        return { width: configuration.rect.width, height: configuration.rect.height };
+    }
+
+    /**
+     * Returns the current size of the panel identified by the given id in the root layout.
+     * @param panelId defines the id of the panel to retrieve its size.
+     */
+    public getRootPanelSize(panelId: string): ISize {
+        let configuration: Nullable<ILayoutTabNodeConfiguration> = null; // = this._layoutTabNodesConfigurations[panelId];
+        for (const key in this._rootLayoutTabNodesConfigurations) {
+            if (key === panelId || this._rootLayoutTabNodesConfigurations[key].name === panelId) {
+                configuration = this._rootLayoutTabNodesConfigurations[key];
             }
         }
 
@@ -943,8 +964,8 @@ export class Editor {
             className: "editorRootLayoutTabStrip",
             name: (
                 <div style={{ width: "268px", height: "100%", overflow: "hidden" }}>
-                    <Icon src={icon} style={{ height: "100%", width: "32px", filter: "none", float: "left" }} />
-                    <span style={{ float: "left", lineHeight: "32px", textAlign: "center" }}>{plugin.title}</span>
+                    <Icon src={icon} style={{ height: "100%", width: "24px", float: "left" }} />
+                    <span style={{ float: "left", marginLeft: "10px", lineHeight: "24px", textAlign: "center" }}>{plugin.title}</span>
                 </div>
             )
         });
