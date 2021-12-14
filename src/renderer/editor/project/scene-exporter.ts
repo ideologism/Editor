@@ -185,8 +185,8 @@ export class SceneExporter {
 			if (!lods.length) { return; }
 
 			m.lodMeshIds = lods.map((lod) => lod.mesh?.id);
-			m.lodDistances = lods.map((lod) => lod.distance);
-			m.lodCoverages = lods.map((lod) => lod.distance);
+			m.lodDistances = lods.map((lod) => lod.distanceOrScreenCoverage);
+			m.lodCoverages = lods.map((lod) => lod.distanceOrScreenCoverage);
 		});
 
 		// Physics
